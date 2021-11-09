@@ -20,6 +20,21 @@ summary(CHR21_county$MedianIncome)
 #  24732   46243   53341   55713   62059  151806       1 
 CHR21_county$MedianIncomeNormalized = (CHR21_county$MedianIncome - 24732) / 55713 * 50
 
+# A. Population Demographics
+# A1. Age Range
+
+
+# A2. Gender
+
+
+# A3. Race
+
+# A4. Migration Flow
+
+
+# B. Social Economic Influential Factors
+
+# B1. Feature Identification and Selection
 # Simple Linear Regression For Feature Selection
 lm_model <- lm(ObesityPercent ~ AdultSmokingPercent + DrinkingPercent + DrinkingPercent +
                  FoodEnvironmentIndex + PhysicalInactiveRate + ExerciseAccessPercent + 
@@ -38,7 +53,14 @@ lm_model_second_round <- lm(ObesityPercent ~ FoodEnvironmentIndex + PhysicalInac
                               LimitedHealthyFoodAccessPercent, data = CHR21_county)
 summary(lm_model_second_round)
 
+# Significant Features Selected: 
+# Food, 
+
+# B2. Career (Employment, Income)
 
 
+# B3. Dining (Food Access)
 
+
+# B4. Education
 
