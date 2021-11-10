@@ -49,6 +49,10 @@ CHR21_state$MedianIncomeNormalized = (CHR21_state$MedianIncome - 45928) / 63290 
 
 
 # A1. Age Range
+# Life Expectancy
+lm_life_fit <- lm(ObesityPercent ~ LifeExpectancy, data = CHR21_county)
+summary(lm_life_fit)
+
 plot_usmap(data = CHR21_county, regions = c("counties"), values = "LifeExpectancy", color = "darkred", label_color = "white") + 
   scale_fill_continuous(low = "mistyrose", high = "blue", name = "Expected Ages", label = scales::comma) + 
   theme(panel.background = element_rect(colour = "black", fill = "lightblue"), legend.position = "right") +
@@ -58,6 +62,37 @@ plot_usmap(data = CHR21_state, values = "LifeExpectancy", color = "darkred", lab
   scale_fill_continuous(low = "mistyrose", high = "blue", name = "Expected Ages", label = scales::comma) + 
   theme(panel.background = element_rect(colour = "black", fill = "lightblue"), legend.position = "right") +
   labs(title = "Life Expectancy", subtitle = "US State Level Life Expectancy Choropleth Map") 
+
+
+# Percentage of Child
+lm_child_fit <- lm(ObesityPercent ~ ChildPercent, data = CHR21_county)
+summary(lm_child_fit)
+
+plot_usmap(data = CHR21_county, values = "ElderlyPercent", color = "darkred", label_color = "white") + 
+  scale_fill_continuous(low = "mistyrose", high = "blue", name = "Elderly Percentage", label = scales::comma) + 
+  theme(panel.background = element_rect(colour = "black", fill = "lightblue"), legend.position = "right") +
+  labs(title = "Elderly Percent", subtitle = "US County Level Elderly Percentage Choropleth Map") 
+
+plot_usmap(data = CHR21_state, values = "ElderlyPercent", color = "darkred", label_color = "white") + 
+  scale_fill_continuous(low = "mistyrose", high = "blue", name = "Elderly Percentage", label = scales::comma) + 
+  theme(panel.background = element_rect(colour = "black", fill = "lightblue"), legend.position = "right") +
+  labs(title = "Elderly Percent", subtitle = "US State Level Elderly Percentage Choropleth Map") 
+
+
+# Percentage of Elderly
+lm_elder_fit <- lm(ObesityPercent ~ ElderlyPercent, data = CHR21_county)
+summary(lm_elder_fit)
+
+plot_usmap(data = CHR21_county, values = "ChildPercent", color = "darkred", label_color = "white") + 
+  scale_fill_continuous(low = "mistyrose", high = "blue", name = "Child Percentage", label = scales::comma) + 
+  theme(panel.background = element_rect(colour = "black", fill = "lightblue"), legend.position = "right") +
+  labs(title = "Child Percent", subtitle = "US County Level Child Percentage Choropleth Map") 
+
+plot_usmap(data = CHR21_state, values = "ChildPercent", color = "darkred", label_color = "white") + 
+  scale_fill_continuous(low = "mistyrose", high = "blue", name = "Child Percentage", label = scales::comma) + 
+  theme(panel.background = element_rect(colour = "black", fill = "lightblue"), legend.position = "right") +
+  labs(title = "Child Percent", subtitle = "US State Level Child Percentage Choropleth Map") 
+
 
 
 # A2. Gender
@@ -121,12 +156,39 @@ CHR21_state %>%
   group_by(DominantGender) %>%
   summarise(mean = mean(ObesityPercent), sd = sd(ObesityPercent), population = sum(Population), count = n())
 
+lm_gender_fit <- lm(ObesityPercent ~ DominantGender, data = CHR21_county)
+summary(lm_gender_fit)
 
 
 # A3. Race
 
-# Race Choropleth Map
+# By Percentage of White Majority Choropleth Map
+plot_usmap(data = CHR21_county, regions = c("counties"), values = "WhitePercent", color = "white", label_color = "white") + 
+  scale_fill_continuous(low = "mistyrose", high = "blue", name = "Percentage", label = scales::comma) + 
+  theme(panel.background = element_rect(colour = "black", fill = "lightblue"), legend.position = "right") +
+  labs(title = "White Percentage", subtitle = "US County Level White Majority Percentage Choropleth Map") 
 
+plot_usmap(data = CHR21_state, values = "WhitePercent", color = "white", label_color = "white") + 
+  scale_fill_continuous(low = "mistyrose", high = "blue", name = "Percentage", label = scales::comma) + 
+  theme(panel.background = element_rect(colour = "black", fill = "lightblue"), legend.position = "right") +
+  labs(title = "White Percentage", subtitle = "US State Level White Majority Percentage Choropleth Map") 
+
+# Dominant Minority Race Function
+getMinority <- function(BlackPercent, NativeAmericanPercent, AsianPercent, IslanderPercent, HispanicPercent)
+ {
+  maxMinor <- max(BlackPercent, NativeAmericanPercent, AsianPercent, IslanderPercent, HispanicPercent)
+  if (maxMinor == BlackPercent) {
+    return(1)
+  } else if (maxMinor == NativeAmericanPercent) {
+    return(2)
+  } else if (maxMinor == AsianPercent) {
+    return(3)
+  } else if (maxMinor == IslanderPercent) {
+    return(4)
+  } else if (maxMinor == HispanicPercent) {
+    return(5)
+  }
+}
 
 # Operation: Zoning by Dominant Minority Rate
 
