@@ -8,6 +8,7 @@ setwd("C:/Users/cwche/Desktop/US_Obesity_Analysis/data")
 # Library Load
 library(usmap)
 library(ggplot2)
+library(ggpubr)
 library(readxl)
 library(dplyr)
 
@@ -68,21 +69,6 @@ plot_usmap(data = CHR21_state, values = "LifeExpectancy", color = "darkred", lab
 lm_child_fit <- lm(ObesityPercent ~ ChildPercent, data = CHR21_county)
 summary(lm_child_fit)
 
-plot_usmap(data = CHR21_county, values = "ElderlyPercent", color = "darkred", label_color = "white") + 
-  scale_fill_continuous(low = "mistyrose", high = "blue", name = "Elderly Percentage", label = scales::comma) + 
-  theme(panel.background = element_rect(colour = "black", fill = "lightblue"), legend.position = "right") +
-  labs(title = "Elderly Percent", subtitle = "US County Level Elderly Percentage Choropleth Map") 
-
-plot_usmap(data = CHR21_state, values = "ElderlyPercent", color = "darkred", label_color = "white") + 
-  scale_fill_continuous(low = "mistyrose", high = "blue", name = "Elderly Percentage", label = scales::comma) + 
-  theme(panel.background = element_rect(colour = "black", fill = "lightblue"), legend.position = "right") +
-  labs(title = "Elderly Percent", subtitle = "US State Level Elderly Percentage Choropleth Map") 
-
-
-# Percentage of Elderly
-lm_elder_fit <- lm(ObesityPercent ~ ElderlyPercent, data = CHR21_county)
-summary(lm_elder_fit)
-
 plot_usmap(data = CHR21_county, values = "ChildPercent", color = "darkred", label_color = "white") + 
   scale_fill_continuous(low = "mistyrose", high = "blue", name = "Child Percentage", label = scales::comma) + 
   theme(panel.background = element_rect(colour = "black", fill = "lightblue"), legend.position = "right") +
@@ -93,6 +79,20 @@ plot_usmap(data = CHR21_state, values = "ChildPercent", color = "darkred", label
   theme(panel.background = element_rect(colour = "black", fill = "lightblue"), legend.position = "right") +
   labs(title = "Child Percent", subtitle = "US State Level Child Percentage Choropleth Map") 
 
+
+# Percentage of Elderly
+lm_elder_fit <- lm(ObesityPercent ~ ElderlyPercent, data = CHR21_county)
+summary(lm_elder_fit)
+
+plot_usmap(data = CHR21_county, values = "ElderlyPercent", color = "darkred", label_color = "white") + 
+  scale_fill_continuous(low = "mistyrose", high = "blue", name = "Elderly Percentage", label = scales::comma) + 
+  theme(panel.background = element_rect(colour = "black", fill = "lightblue"), legend.position = "right") +
+  labs(title = "Elderly Percent", subtitle = "US County Level Elderly Percentage Choropleth Map") 
+
+plot_usmap(data = CHR21_state, values = "ElderlyPercent", color = "darkred", label_color = "white") + 
+  scale_fill_continuous(low = "mistyrose", high = "blue", name = "Elderly Percentage", label = scales::comma) + 
+  theme(panel.background = element_rect(colour = "black", fill = "lightblue"), legend.position = "right") +
+  labs(title = "Elderly Percent", subtitle = "US State Level Elderly Percentage Choropleth Map") 
 
 
 # A2. Gender
@@ -248,44 +248,75 @@ lm_model <- lm(ObesityPercent ~ AdultSmokingPercent + DrinkingPercent + Drinking
 summary(lm_model)
 
 lm_model_second_round <- lm(ObesityPercent ~ FoodEnvironmentIndex + PhysicalInactiveRate + 
-                              UninsuredPercent + UnemployPercent + IncomeInequilityRatio +
-                              HousingProblemPercent + LifeExpectancy + FoodInsecurePercent +
-                              LimitedHealthyFoodAccessPercent, data = CHR21_county)
+                              UninsuredPercent + UnemployPercent + MedianIncomeNormalized + 
+                              IncomeInequilityRatio + ChildrenPovertyPercent + 
+                              HousingProblemPercent + PoorHealthPercent + FoodInsecurePercent +
+                              LimitedHealthyFoodAccessPercent + InsufficientSleepPercent, 
+                            data = CHR21_county)
 summary(lm_model_second_round)
 
-# Inspect Potential Influential Factors
-ggscatter(chd21, y = "ObesityPercent", x = "FoodEnvironmentIndex", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson",
-          ylab = "Obesity % of Population", xlab = "Food Environment Index")
-ggscatter(chd21, y = "ObesityPercent", x = "PEInactive", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson",
-          ylab = "Obesity % of Population", xlab = "PE Inactive % of Population")
-ggscatter(chd21, y = "ObesityPercent", x = "UnemployPercent", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson",
-          ylab = "Obesity % of Population", xlab = "Unemployed % of Population")
-ggscatter(chd21, y = "ObesityPercent", x = "smokepercent", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson",
-          ylab = "Obesity % of Population", xlab = "Smoking % of Population")
 
-chd21$predicted = 10.3685635+0.4150168*chd21$FoodEnvir+0.4554356*chd21$PEInactive+0.3730278*chd21$UnemployPercent+0.2997735*chd21$smokepercent
-plot_usmap(data = chd21, regions = c("counties"), values = "predicted", color = "darkred", label_color = "white") + 
-  scale_fill_continuous(low = "mistyrose", high = "blue", name = "Obesity Prediction", label = scales::comma) + 
+# Hypothesis 1: Regions with poor Physical Health 
+# PhysicalInactiveRate, InsufficientSleepPercent, PoorHealthPercent
+# EDA
+ggscatter(CHR21_county, y = "ObesityPercent", x = "PhysicalInactiveRate", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          title = "Inspection on Physical Inactive Rate and Obesity of all counties",
+          ylab = "Obesity % of Population", xlab = "Physical Inactive Rate")
+
+ggscatter(CHR21_county, y = "ObesityPercent", x = "InsufficientSleepPercent", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          title = "Inspection on Insufficient Sleep and Obesity of all counties",
+          ylab = "Obesity % of Population", xlab = "Insufficient Sleep %")
+
+ggscatter(CHR21_county, y = "ObesityPercent", x = "PoorHealthPercent", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          title = "Inspection on Poor Health Percent and Obesity of all counties",
+          ylab = "Obesity % of Population", xlab = "Poor Health %")
+
+
+# Spatial Analysis on Health Factors
+plot_usmap(data = CHR21_county, regions = c("counties"), values = "PhysicalInactiveRate", color = "white", label_color = "white") + 
+  scale_fill_continuous(low = "lightgreen", high = "darkblue", name = "Physical Inactive Rate", label = scales::comma) + 
+  theme(panel.background = element_rect(colour = "black", fill = "lightblue"), legend.position = "right") +
+  labs(title = "White Percentage", subtitle = "US County Level Physical Inactive Rate Choropleth Map") 
+
+
+
+# Hypothesis 2: Food Related Factor: Regions with lower food environment 
+# Inspection on Food Environment
+ggscatter(CHR21_county, y = "ObesityPercent", x = "FoodEnvironmentIndex", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          title = "Inspection on Food Environment and Obesity of all counties",
+          ylab = "Obesity % of Population", xlab = "Food Environment Index")
+
+# Food Environment Index Chropoleth Map
+plot_usmap(data = CHR21_county, regions = c("counties"), values = "ObesityPercent", color = "darkred", label_color = "white") + 
+  scale_fill_continuous(low = "mistyrose", high = "blue", name = "Obesity Percent", label = scales::comma) + 
+  theme(legend.position = "right")
+
+plot_usmap(data = CHR21_state, regions = "states", values = "ObesityPercent", color = "darkred", label_color = "white") + 
+  scale_fill_continuous(low = "mistyrose", high = "blue", name = "Obesity Percent", label = scales::comma) + 
   theme(legend.position = "right")
 
 
-# Significant Features Selected: 
-# Food, 
+# Hypothesis 3: Lower Income Regions have higher Obesity Rates.
+# Variables: IncomeInequilityRatio, UnemployPercent
 
 
-# B2. Career (Employment, Income)
 
 
-# B3. Dining (Food Access)
+# Hypothesis 4: Education Level doesn't affect Obesity Rate Much.
+# HighSchoolCompletionRate
 
 
-# B4. Education
+
+# Modeling Social Economic Risk Prediction
+
+# Use Linear Regression?
+
 
