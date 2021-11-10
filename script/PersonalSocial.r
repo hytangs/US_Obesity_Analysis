@@ -190,13 +190,45 @@ getMinority <- function(BlackPercent, NativeAmericanPercent, AsianPercent, Islan
   }
 }
 
+
 # Operation: Zoning by Dominant Minority Rate
+CHR21_county$DominantMinority <- mapply(getMinority, CHR21_county$BlackPercent, CHR21_county$NativeAmericanPercent,
+                                        CHR21_county$AsianPercent, CHR21_county$IslanderPercent, 
+                                        CHR21_county$HispanicPercent)
+CHR21_county$DominantMinority <- as.factor(CHR21_county$DominantMinority)
+
+CHR21_state$DominantMinority <- mapply(getMinority, CHR21_state$BlackPercent, CHR21_state$NativeAmericanPercent,
+                                        CHR21_state$AsianPercent, CHR21_state$IslanderPercent, 
+                                        CHR21_state$HispanicPercent)
+CHR21_state$DominantMinority <- as.factor(CHR21_state$DominantMinority)
+  
+
+# Plot Dominant Minority Chropoleth Map:
+plot_usmap(data = CHR21_county, regions = "county", values = "DominantMinority",color="grey")+ 
+  theme(panel.background = element_rect(colour = "black")) +
+  scale_fill_manual(values = c(`1` = "red", `2` = "green", `3` = "purple", `4` = "orange", `5` = "blue"),
+                    labels = c("Black", "Native American", "Asian", "Islander", "Hispanic"), name = "Dominant Minority") + 
+  theme(legend.position = "right") +
+  labs(title = "Dominant Minority Race", subtitle = "US County Level Dominant Minority Race Choropleth Map") 
+
+plot_usmap(data = CHR21_state, values = "DominantMinority",color="grey")+ 
+  theme(panel.background = element_rect(colour = "black")) +
+  scale_fill_manual(values = c(`1` = "red", `2` = "green", `3` = "purple", `4` = "orange", `5` = "blue"),
+                    labels = c("Black", "Native American", "Asian", "Islander", "Hispanic"), name = "Dominant Minority") + 
+  theme(legend.position = "right") +
+  labs(title = "Dominant Minority Race", subtitle = "US State Level Dominant Minority Race Choropleth Map") 
 
 
-# Operation: Get Zonal Value
+# Operation: Zonal Obesity Rate Summary
+CHR21_county %>%
+  group_by(DominantMinority) %>%
+  summarise(mean = mean(ObesityPercent), sd = sd(ObesityPercent), population = sum(Population), count = n())
+
+CHR21_state %>%
+  group_by(DominantMinority) %>%
+  summarise(mean = mean(ObesityPercent), sd = sd(ObesityPercent), population = sum(Population), count = n())
 
 
-# Operation: 
 # A4. Migration Flow
 
 
@@ -210,7 +242,7 @@ lm_model <- lm(ObesityPercent ~ AdultSmokingPercent + DrinkingPercent + Drinking
                  PrimaryCarePhysiciansRate + DentistRate + HighSchoolCompletionRate +
                  UnemployPercent + MedianIncomeNormalized + IncomeInequilityRatio +
                  ChildrenPovertyPercent + HousingProblemPercent + ViolentCrimeRate +
-                 PoorHealthPercent + LifeExpectancy + FoodInsecurePercent +
+                 PoorHealthPercent + FoodInsecurePercent +
                  LimitedHealthyFoodAccessPercent + InsufficientSleepPercent, 
                data = CHR21_county)
 summary(lm_model)
