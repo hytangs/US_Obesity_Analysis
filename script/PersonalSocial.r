@@ -38,9 +38,6 @@ require(sf)
 shape <- read_sf(dsn = ".", layer = "cb_2018_us_county_20m")
 
 CHR21_sf <- merge(CHR21_sf, shape, by.x="fips", by.y="GEOID")
-CHR21_sf.sf <- st_as_sf(CHR21_sf)
-state.nb <- poly2nb(CHR21_sf.sf)
-state.lw <- nb2listw(state.nb, zero.policy = TRUE)
 
 
 # County Level Obesity Percent Map
@@ -68,6 +65,12 @@ summary(CHR21_sf$MedianIncome)
 # Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 # 24732   46249   53362   55702   62038  151806    1 
 CHR21_sf$MedianIncomeNormalized = (CHR21_sf$MedianIncome - 24732) / 53362 * 50
+
+
+# To sf:
+CHR21_sf.sf <- st_as_sf(CHR21_sf)
+state.nb <- poly2nb(CHR21_sf.sf)
+state.lw <- nb2listw(state.nb, zero.policy = TRUE)
 
 
 # A. Population Demographics
@@ -297,8 +300,30 @@ CHR21_state %>%
 
 # A4. Migration Flow
 
+# Read in data from Migration Table
+data_migration <- read_excel("State_to_State_Migrations_Table_2019.xlsx", 
+                          sheet = "Migration")
+CHR21_state <- merge(CHR21_state, data_migration)
+
+# Plot
+plot_usmap(data = CHR21_state, values = "migration", color = "darkred", label_color = "white") + 
+  scale_fill_continuous(low = "mistyrose", high = "blue", name = "Migration Size", label = scales::comma) + 
+  theme(panel.background = element_rect(colour = "black", fill = "lightblue"), legend.position = "right") +
+  labs(title = "Migration Data", subtitle = "US State Level Migration Size Choropleth Map") 
+
+CHR21_state$MigrationLevel <- CHR21_state$migration / CHR21_state$Population
+
+plot_usmap(data = CHR21_state, values = "MigrationLevel", color = "darkred", label_color = "white") + 
+  scale_fill_continuous(low = "mistyrose", high = "blue", name = "Migration Level", label = scales::comma) + 
+  theme(panel.background = element_rect(colour = "black", fill = "lightblue"), legend.position = "right") +
+  labs(title = "Migration Level Data", subtitle = "US State Level Migration Level Choropleth Map") 
+
 
 # B. Social Economic Influential Factors
+
+
+# Feature Selection by SAR Spatial Autoregression
+
 sar.res_first_round <-spautolm(ObesityPercent ~ AdultSmokingPercent + DrinkingPercent +
                           FoodEnvironmentIndex + PhysicalInactiveRate + ExerciseAccessPercent + 
                           SexualDiseaseRate + TeenBirthRate + UninsuredPercent + 
@@ -318,8 +343,9 @@ sar1.res_second_round <- spautolm(ObesityPercent ~ AdultSmokingPercent +
                                     LimitedHealthyFoodAccessPercent + InsufficientSleepPercent, 
                                   data = CHR21_sf.sf, listw = state.lw, zero.policy = TRUE)
 summary(sar1.res_second_round)
-# B1. Feature Identification and Selection
-# Simple Linear Regression For Feature Selection
+
+
+# Alternative : OLS Linear Regression (Unused)
 lm_model <- lm(ObesityPercent ~ AdultSmokingPercent + DrinkingPercent + DrinkingPercent +
                  FoodEnvironmentIndex + PhysicalInactiveRate + ExerciseAccessPercent + 
                  SexualDiseaseRate + TeenBirthRate + UninsuredPercent + 
@@ -340,10 +366,8 @@ lm_model_second_round <- lm(ObesityPercent ~ FoodEnvironmentIndex + PhysicalInac
 summary(lm_model_second_round)
 
 
-# Spatial Regression:
-CHR21_sf.sf <- st_as_sf(CHR21_sf)
 
-# Hypothesis 1: Regions with poor Physical Health 
+# Regions with poor Physical Health 
 # PhysicalInactiveRate, InsufficientSleepPercent, PoorHealthPercent
 # EDA
 ggscatter(CHR21_county, y = "ObesityPercent", x = "PhysicalInactiveRate", 
@@ -383,7 +407,7 @@ plot_usmap(data = CHR21_state, values = "PhysicalInactiveRate", color = "white",
   labs(title = "White Percentage", subtitle = "US State Level Physical Inactive Rate Choropleth Map") 
 
 
-# Hypothesis 2: Food Related Factor: Regions with lower food environment 
+#  Related Factor: Regions with lower food environment 
 # Inspection on Food Environment
 ggscatter(CHR21_county, y = "ObesityPercent", x = "FoodEnvironmentIndex", 
           add = "reg.line", conf.int = TRUE, 
@@ -392,28 +416,54 @@ ggscatter(CHR21_county, y = "ObesityPercent", x = "FoodEnvironmentIndex",
           ylab = "Obesity % of Population", xlab = "Food Environment Index")
 
 # Food Environment Index Chropoleth Map
-plot_usmap(data = CHR21_county, regions = c("counties"), values = "ObesityPercent", color = "darkred", label_color = "white") + 
-  scale_fill_continuous(low = "mistyrose", high = "blue", name = "Obesity Percent", label = scales::comma) + 
-  theme(legend.position = "right")
+ggscatter(CHR21_county, y = "ObesityPercent", x = "LimitedHealthyFoodAccessPercent", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          title = "Inspection on Healthy Food Limited Access and Obesity of all counties",
+          ylab = "Obesity % of Population", xlab = "Limited Healthy Food Access %")
 
-plot_usmap(data = CHR21_state, regions = "states", values = "ObesityPercent", color = "darkred", label_color = "white") + 
-  scale_fill_continuous(low = "mistyrose", high = "blue", name = "Obesity Percent", label = scales::comma) + 
-  theme(legend.position = "right")
+ggscatter(CHR21_county, y = "ObesityPercent", x = "FoodEnvironmentIndex", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          title = "Inspection on Food Environment and Obesity of all counties",
+          ylab = "Obesity % of Population", xlab = "Food Environment Index %")
+
+ggscatter(CHR21_county, y = "ObesityPercent", x = "FoodInsecurePercent", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          title = "Inspection on Food Insecurity and Obesity of all counties",
+          ylab = "Obesity % of Population", xlab = "Food Insecure %")
 
 
-# Hypothesis 3: Lower Income Regions have higher Obesity Rates.
-# Variables: IncomeInequilityRatio, UnemployPercent
+plot_usmap(data = CHR21_county, regions = c("counties"), values = "FoodInsecurePercent", color = "darkred", label_color = "white") + 
+  scale_fill_continuous(low = "mistyrose", high = "blue", name = "Insecured Percent", label = scales::comma) + 
+  theme(panel.background = element_rect(colour = "black", fill = "white"), legend.position = "right") +
+  labs(title = "Food Insecurity", subtitle = "US County Level Food insecuirty Choropleth Map") 
+
+plot_usmap(data = CHR21_state, regions = "states", values = "FoodInsecurePercent", color = "darkred", label_color = "white") + 
+  scale_fill_continuous(low = "mistyrose", high = "blue", name = "Insecured Percent", label = scales::comma) + 
+  theme(panel.background = element_rect(colour = "black", fill = "white"), legend.position = "right") +
+  labs(title = "Food Insecurity", subtitle = "US State Level Food insecuirty Choropleth Map") 
+
+# Workspace Related Scatterplots
+ggscatter(CHR21_county, y = "ObesityPercent", x = "IncomeInequilityRatio", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          title = "Inspection on Income Inequility and Obesity of all counties",
+          ylab = "Obesity % of Population", xlab = "Income Inequility %")
+
+ggscatter(CHR21_county, y = "ObesityPercent", x = "UninsuredPercent", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          title = "Inspection on Food Environment and Obesity of all counties",
+          ylab = "Obesity % of Population", xlab = "Uninsured %")
+
+ggscatter(CHR21_county, y = "ObesityPercent", x = "UnemployPercent", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          title = "Inspection on Food Insecurity and Obesity of all counties",
+          ylab = "Obesity % of Population", xlab = "Unemployed %")
 
 
-
-
-# Hypothesis 4: Education Level doesn't affect Obesity Rate Much.
-# HighSchoolCompletionRate
-
-
-
-# Modeling Social Economic Risk Prediction
-
-# Use Linear Regression?
 
 
