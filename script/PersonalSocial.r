@@ -455,15 +455,19 @@ ggscatter(CHR21_county, y = "ObesityPercent", x = "IncomeInequilityRatio",
 ggscatter(CHR21_county, y = "ObesityPercent", x = "UninsuredPercent", 
           add = "reg.line", conf.int = TRUE, 
           cor.coef = TRUE, cor.method = "pearson",
-          title = "Inspection on Food Environment and Obesity of all counties",
+          title = "Inspection on Uninsured People and Obesity of all counties",
           ylab = "Obesity % of Population", xlab = "Uninsured %")
 
 ggscatter(CHR21_county, y = "ObesityPercent", x = "UnemployPercent", 
           add = "reg.line", conf.int = TRUE, 
           cor.coef = TRUE, cor.method = "pearson",
-          title = "Inspection on Food Insecurity and Obesity of all counties",
+          title = "Inspection on Unemployment and Obesity of all counties",
           ylab = "Obesity % of Population", xlab = "Unemployed %")
 
 
-
-
+# Final Socialeconomic Model:
+sar1.res_final <- spautolm(ObesityPercent ~ AdultSmokingPercent + 
+                             PhysicalInactiveRate + 
+                             FoodInsecurePercent, 
+                           data = CHR21_sf.sf, listw = state.lw, zero.policy = TRUE)
+summary(sar1.res_final)
