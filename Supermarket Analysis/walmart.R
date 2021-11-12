@@ -1,3 +1,5 @@
+# setwd("/Users/Sigrid/Documents/GitHub/US_Obesity_Analysis/Supermarket Analysis")
+
 # Loading Required Libraries
 library(usmap) 
 library(ggplot2) 

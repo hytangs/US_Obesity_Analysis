@@ -1,3 +1,5 @@
+# setwd("/Users/Sigrid/Documents/GitHub/US_Obesity_Analysis/Fast food restaurant Analysis")
+
 # Loading Required Libraries
 library(usmap) 
 library(ggplot2) 
